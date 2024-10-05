@@ -1,0 +1,233 @@
+{
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+    "title": "Primary Enrollment Globally",
+    "width": 1000,
+    "height": 500,
+    "params": [
+        {
+            "name": "Year_selection",
+            "value": 2003,
+            "bind": {
+                "input": "range",
+                "min": 1820,
+                "max": 2020,
+                "step": 1,
+                "name": "Year: "
+            }
+        },
+        {
+            "name": "selected_country",
+            "value": null,
+            "bind": {
+                "input": "select",
+                "options": [
+                    null,
+                    "Malaysia",
+                    "Australia"
+                ],
+                "labels": [
+                    "World Map",
+                    "Malaysia",
+                    "Australia"
+                ],
+                "name": "Select country: "
+            }
+        },
+        {
+            "name": "zoom_level",
+            "value": 200,
+            "bind": {
+                "input": "range",
+                "min": 200,
+                "max": 6000,
+                "step": 100,
+                "name": "Zoom: "
+            }
+        }
+    ],
+    "projection": {
+        "type": "naturalEarth1",
+        "scale": {
+            "expr": "selected_country ? zoom_level : zoom_level"
+        },
+        "center": {
+            "expr": "selected_country ? (selected_country == 'Malaysia' ? [101.9758, 4.2105] : selected_country == 'Australia' ? [133.7751, -25.2744] : [0, 0]) : [0, 0]"
+        }
+    },
+    "layer": [
+        {
+            "data": {
+                "url": "https://raw.githubusercontent.com/ecyl456/week9_homework/refs/heads/main/ne_1_.json",
+                "format": {
+                    "type": "topojson",
+                    "feature": "ne_10m_admin_0_countries"
+                }
+            },
+            "transform": [
+                {
+                    "calculate": "'Data is not available for ' + datum.properties.NAME + ' at this specific year'",
+                    "as": "note"
+                }
+            ],
+            "mark": {
+                "type": "geoshape",
+                "fill": "#ddd",
+                "stroke": "white",
+                "strokeWidth": 1
+            },
+            "encoding": {
+                "tooltip": {
+                    "field": "note"
+                }
+            }
+        },
+        {
+            "data": {
+                "url": "https://raw.githubusercontent.com/ecyl456/week9_homework/refs/heads/main/primary-enrollment-selected-countries.csv"
+            },
+            "transform": [
+                {
+                    "lookup": "Entity",
+                    "from": {
+                        "data": {
+                            "url": "https://raw.githubusercontent.com/ecyl456/week9_homework/refs/heads/main/ne_1_.json",
+                            "format": {
+                                "type": "topojson",
+                                "feature": "ne_10m_admin_0_countries"
+                            }
+                        },
+                        "key": "properties.NAME"
+                    },
+                    "as": "geo"
+                },
+                {
+                    "filter": "datum.Year == Year_selection"
+                },
+                {
+                    "calculate": "datum.Entity + ': ' + datum['Combined total net enrolment rate, primary, both sexes']",
+                    "as": "combined_text"
+                }
+            ],
+            "layer": [
+                {
+                    "mark": {
+                        "type": "geoshape",
+                        "stroke": "#fff",
+                        "strokeWidth": 0.5
+                    },
+                    "encoding": {
+                        "shape": {
+                            "field": "geo",
+                            "type": "geojson"
+                        },
+                        "color": {
+                            "field": "Combined total net enrolment rate, primary, both sexes",
+                            "type": "quantitative",
+                            "scale": {
+                                "type": "linear",
+                                "domain": [
+                                    0,
+                                    20,
+                                    40,
+                                    60,
+                                    80,
+                                    100,
+                                    120
+                                ]
+                            },
+                            "legend": {
+                                "orient": "right",
+                                "title": "Combined Total Net Enrolment Rate(Primary, both sexes)",
+                                "titleFontSize": 10,
+                                "labelFontSize": 10,
+                                "titleLimit": 300,
+                                "padding": 10
+                            }
+                        },
+                        "tooltip": [
+                            {
+                                "field": "Entity",
+                                "type": "nominal",
+                                "title": "Country"
+                            },
+                            {
+                                "field": "Year",
+                                "type": "quantitative",
+                                "title": "Year"
+                            },
+                            {
+                                "field": "Combined total net enrolment rate, primary, both sexes",
+                                "type": "quantitative",
+                                "title": "Combined Total Net Enrolment Rate(Primary, both sexes)"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "mark": {
+                        "type": "rect",
+                        "fill": "lightgray",
+                        "stroke": "black",
+                        "strokeWidth": 1
+                    },
+                    "transform": [
+                        {
+                            "filter": "datum.Entity == 'Malaysia' || datum.Entity == 'Australia' "
+                        }
+                    ],
+                    "encoding": {
+                        "x": {
+                            "value": 770
+                        },
+                        "y": {
+                            "value": 380
+                        },
+                        "x2": {
+                            "value": 970
+                        },
+                        "y2": {
+                            "value": 460
+                        }
+                    }
+                },
+                {
+                    "mark": {
+                        "type": "text",
+                        "align": "right",
+                        "baseline": "middle",
+                        "dx": -12,
+                        "fontSize": 20.5
+                    },
+                    "transform": [
+                        {
+                            "filter": "datum.Entity == 'Malaysia' || datum.Entity == 'Australia' "
+                        }
+                    ],
+                    "encoding": {
+                        "text": {
+                            "field": "combined_text",
+                            "type": "nominal"
+                        },
+                        "color": {
+                            "value": "black"
+                        },
+                        "opacity": {
+                            "condition": {
+                                "test": "datum['Entity'] == selected_country",
+                                "value": 1
+                            },
+                            "value": 0
+                        },
+                        "x": {
+                            "value": 970
+                        },
+                        "y": {
+                            "value": 420
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "config": {}
+}
